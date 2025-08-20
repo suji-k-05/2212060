@@ -1,105 +1,129 @@
 import React, { useState, useEffect } from "react";
 
 function App() {
-  const [url, setUrl] = useState("");
-  const [shortLink, setShortLink] = useState(null);
-  const [createdAt, setCreatedAt] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [longUrl, setLongUrl] = useState("");
+  const [shortUrl, setShortUrl] = useState("");
+  const [createdTime, setCreatedTime] = useState("");
+  const [expiryTime, setExpiryTime] = useState("");
+  const [secondsLeft, setSecondsLeft] = useState(null);
+  const [validity, setValidity] = useState(5);
 
-  const createShortCode = () => {
-    const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const generateCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let code = "";
     for (let i = 0; i < 6; i++) {
-      code += characters.charAt(Math.floor(Math.random() * characters.length));
+      code += chars[Math.floor(Math.random() * chars.length)];
     }
     return code;
   };
 
-  const handleShorten = () => {
-    if (!url.trim()) {
-      alert("Enter a valid URL!");
+  const handleGenerate = () => {
+    if (!longUrl.trim()) {
+      alert("Please enter a URL!");
       return;
     }
 
     const now = new Date();
-    const expiry = new Date(now.getTime() + 5 * 60 * 1000);
+    const expiry = new Date(now.getTime() + validity * 60 * 1000);
 
-    setCreatedAt(now.toLocaleString());
-    setExpiresAt(expiry.toLocaleString());
+    setCreatedTime(now.toLocaleString());
+    setExpiryTime(expiry.toLocaleString());
 
-    const shortCode = createShortCode();
-    setShortLink(window.location.origin + "/" + shortCode);
+    const code = generateCode();
+    setShortUrl(window.location.origin + "/" + code);
 
-    setTimeRemaining(5 * 60);
+    setSecondsLeft(validity * 60);
   };
 
   useEffect(() => {
-    if (timeRemaining === null) return;
-    if (timeRemaining <= 0) {
-      setShortLink(null);
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) {
+      setShortUrl("");
       return;
     }
 
-    const tick = setInterval(() => {
-      setTimeRemaining((prev) => prev - 1);
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => prev - 1);
     }, 1000);
 
-    return () => clearInterval(tick);
-  }, [timeRemaining]);
+    return () => clearInterval(interval);
+  }, [secondsLeft]);
 
-  const formatClock = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const rem = secs % 60;
+    return `${mins}:${rem < 10 ? "0" : ""}${rem}`;
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Simple URL Shortener with Expiry</h1>
+    <div style={{ textAlign: "center", marginTop: "40px" }}>
+      <h2>URL Shortener with Custom Expiry</h2>
+
       <input
         type="text"
-        placeholder="Paste your URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
+        placeholder="Enter a long URL here..."
+        value={longUrl}
+        onChange={(e) => setLongUrl(e.target.value)}
         style={{
-          padding: "6px",
-          width: "280px",
-          marginRight: "8px",
-          borderRadius: "5px",
-          border: "1px solid #333",
+          padding: "8px",
+          width: "300px",
+          borderRadius: "6px",
+          border: "1px solid #444",
+          marginRight: "10px",
         }}
       />
+
+      <select
+        value={validity}
+        onChange={(e) => setValidity(Number(e.target.value))}
+        style={{ padding: "8px", borderRadius: "6px", marginRight: "10px" }}
+      >
+        <option value={1}>1 Minute</option>
+        <option value={5}>5 Minutes</option>
+        <option value={10}>10 Minutes</option>
+        <option value={30}>30 Minutes</option>
+        <option value={60}>1 Hour</option>
+      </select>
+
       <button
-        onClick={handleShorten}
+        onClick={handleGenerate}
         style={{
-          padding: "6px 12px",
-          background: "#222",
-          color: "white",
+          padding: "8px 15px",
+          backgroundColor: "#222",
+          color: "#fff",
           border: "none",
-          borderRadius: "5px",
+          borderRadius: "6px",
           cursor: "pointer",
         }}
       >
-        Shorten
+        Generate
       </button>
 
-      {createdAt && (
-        <div style={{ marginTop: "20px" }}>
-          <p><b>Original:</b> {url}</p>
+      {createdTime && (
+        <div style={{ marginTop: "25px" }}>
           <p>
-            <b>Shortened:</b>{" "}
-            {shortLink ? (
-              <a href={url} target="_blank" rel="noreferrer">
-                {shortLink}
+            <b>Original URL:</b> {longUrl}
+          </p>
+          <p>
+            <b>Shortened URL:</b>{" "}
+            {shortUrl ? (
+              <a href={longUrl} target="_blank" rel="noreferrer">
+                {shortUrl}
               </a>
             ) : (
               "Expired"
             )}
           </p>
-          <p><b>Created At:</b> {createdAt}</p>
-          <p><b>Expires At:</b> {expiresAt}</p>
-          <p><b>Time Left:</b> {timeRemaining > 0 ? formatClock(timeRemaining) : "Expired"}</p>
+          <p>
+            <b>Created At:</b> {createdTime}
+          </p>
+          <p>
+            <b>Expires At:</b> {expiryTime}
+          </p>
+          <p>
+            <b>Time Left:</b>{" "}
+            {secondsLeft > 0 ? formatTime(secondsLeft) : "Expired"}
+          </p>
         </div>
       )}
     </div>
